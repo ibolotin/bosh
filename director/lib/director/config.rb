@@ -106,7 +106,7 @@ module Bosh::Director
 
       def get_revision
         Dir.chdir(File.expand_path("../../../..", __FILE__))
-        revision_command = "(cat REVISION || " +
+        revision_command = "(cat REVISION 2>&1 || " +
             "git show-ref --head --hash=8 2> /dev/null || " +
             "echo 00000000) | head -n1"
         `#{revision_command}`.strip
@@ -131,6 +131,12 @@ module Bosh::Director
           end
         end
         @blobstore
+      end
+
+      def cloud_type
+        if @cloud_options
+          @cloud_options["plugin"]
+        end
       end
 
       def cloud
