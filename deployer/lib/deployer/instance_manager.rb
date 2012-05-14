@@ -319,7 +319,7 @@ module Bosh::Deployer
     def update_spec(spec)
       properties = spec["properties"]
 
-      %w{blobstore postgres director redis nats aws_registry}.each do |service|
+      %w{blobstore postgres director redis nats aws_registry openstack_registry}.each do |service|
         next unless properties[service]
         properties[service]["address"] = service_ip
 
