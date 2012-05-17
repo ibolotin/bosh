@@ -456,7 +456,7 @@ namespace "stemcell" do
     sh("#{sudo} #{stages_dir}/30_openstack.sh #{chroot_dir} #{lib_dir}")
 
     # Build stemcell
-    build_vm_image(:hypervisor => "kvm")
+    build_vm_image(:hypervisor => "xen")
   end
 
   # TODO add micro cloud i.e "Build micro <cloud|bosh> ..."
