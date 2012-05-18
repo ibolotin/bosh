@@ -46,6 +46,15 @@ run_in_chroot $target "apt-get install -y --force-yes --no-install-recommends gr
 
 run_in_chroot $target "apt-get install -y --force-yes cloud-init "
 
+run_in_chroot $target "
+adduser --disabled-password --gecos Ubuntu ubuntu
+echo ubuntu:c1oudc0w | chpasswd
+"
+for grp in admin adm audio cdrom dialout floppy video plugdev dip
+do
+  run_in_chroot $target "adduser ubuntu $grp"
+done
+
 mkdir -p $target/var/vcap/bosh/src
 cp -r $lib_dir/openstack $target/var/vcap/bosh/src/
 
