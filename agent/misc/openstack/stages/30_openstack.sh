@@ -40,6 +40,10 @@ add_on_exit "umount ${target}/proc $target/dev/pts $target/dev"
 disable_daemon_startup $target $skeleton
 add_on_exit "enable_daemon_startup $target"
 
+# openstack specific packages(grub is not actually installed, we just need /boot/grub/menu.lst for pv-grub)
+export DEBIAN_FRONTEND=noninteractive
+run_in_chroot $target "apt-get install -y --force-yes --no-install-recommends grub-pc grub-legacy-ec2"
+
 mkdir -p $target/var/vcap/bosh/src
 cp -r $lib_dir/openstack $target/var/vcap/bosh/src/
 
