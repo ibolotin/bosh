@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
 module Bosh::Agent
-  class Infrastructure::OpenStack::Registry
+  class Infrastructure::Openstack::Registry
     class << self
 
       API_TIMEOUT           = 86400 * 3

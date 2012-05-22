@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
 module Bosh::Agent
-  class Infrastructure::OpenStack::Settings
+  class Infrastructure::Openstack::Settings
 
     VIP_NETWORK_TYPE = "vip"
     DHCP_NETWORK_TYPE = "dynamic"
@@ -20,7 +20,7 @@ module Bosh::Agent
     end
 
     def setup_openssh_key
-      public_key = Infrastructure::OpenStack::Registry.get_openssh_key
+      public_key = Infrastructure::Openstack::Registry.get_openssh_key
       if public_key.nil? || public_key.empty?
         return
       end
@@ -30,7 +30,7 @@ module Bosh::Agent
 
     def load_settings
       setup_openssh_key
-      settings = Infrastructure::OpenStack::Registry.get_settings
+      settings = Infrastructure::Openstack::Registry.get_settings
       settings_json = Yajl::Encoder.encode(settings)
       File.open(@settings_file, 'w') { |f| f.write(settings_json) }
       Bosh::Agent::Config.settings = settings
