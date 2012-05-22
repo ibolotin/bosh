@@ -214,8 +214,6 @@ namespace "stemcell" do
         ovftool_bin = get_ovftool_bin if format == "ovf"
       when "xen"
         format ||= "aws"
-      when "kvm"
-        format ||= "openstack"
       else
         raise "Unknown hypervisor: #{hypervisor}"
     end
@@ -284,21 +282,6 @@ namespace "stemcell" do
               fail("Unknown format: #{format}")
           end
 
-        when "kvm"
-          case format
-            when "openstack"
-              Dir.chdir("ubuntu-kvm") do
-                files = Dir.glob("*")
-                files.delete("run.sh")
-                raise "Found more than one image: #{files}" unless files.length == 1
-                root_image = files.first
-                mv(root_image, "root.img")
-                sh("#{sudo} e2label root.img stemcell_root")
-                sh("tar zcf ../stemcell/image root.img")
-              end
-            else
-              fail("Unknown format: #{format}")
-          end
         else
           raise "Unknown hypervisor: #{hypervisor}"
       end
@@ -425,7 +408,7 @@ namespace "stemcell" do
     sh("#{sudo} #{stages_dir}/30_aws.sh #{chroot_dir} #{lib_dir}")
 
     # Build stemcell
-    build_vm_image(:hypervisor => "xen")
+    build_vm_image(:hypervisor => "xen", :format => "aws")
   end
 
   # Takes in an optional argument "chroot_dir"
@@ -456,7 +439,7 @@ namespace "stemcell" do
     sh("#{sudo} #{stages_dir}/30_openstack.sh #{chroot_dir} #{lib_dir}")
 
     # Build stemcell
-    build_vm_image(:hypervisor => "kvm")
+    build_vm_image(:hypervisor => "xen", :format => "openstack")
   end
 
   # TODO add micro cloud i.e "Build micro <cloud|bosh> ..."
