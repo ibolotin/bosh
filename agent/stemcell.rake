@@ -379,13 +379,16 @@ namespace "stemcell" do
         exit 1
       end
       @infrastructure_name = args[:infrastructure]
+      chroot_tgz = "chroot#{@infrastructure_name}.tgz"
+    else
+      chroot_tgz = "chroot.tgz"
     end
     setup_chroot_dir
     Dir.chdir(get_working_dir) do
-      sh "#{sudo} tar zcf chroot.tgz chroot"
+      sh "#{sudo} tar zcf #{chroot_tgz} chroot"
     end
     puts "chroot directory is #{get_chroot_dir}"
-    puts "Generated chroot tgz: #{File.join(get_working_dir, "chroot.tgz")}"
+    puts "Generated chroot tgz: #{File.join(get_working_dir, chroot_tgz)}"
   end
 
   # Takes in an optional argument "chroot_dir"
