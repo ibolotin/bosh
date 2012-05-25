@@ -51,37 +51,56 @@ describe Bosh::Director::DeploymentPlanCompiler do
     end
   end
 
-  describe :bind_release do
+  describe :bind_releases do
     before(:each) do
       @release_spec = stub(:ReleaseSpec)
       @release_spec.stub(:name).and_return("my_release")
       @release_spec.stub(:version).and_return(10)
-      @deployment_plan.stub(:release).and_return(@release_spec)
+      @deployment_plan.stub(:releases).and_return([@release_spec])
     end
 
-    it "should bind the release" do
+    it "should bind releases" do
       deployment = BD::Models::Deployment.make
-      release = BD::Models::Release.make(:name => "my_release")
-      version = BD::Models::ReleaseVersion.make(
-          :release => release, :version => 10)
+
+      foo_release = BD::Models::Release.make(:name => "foo")
+      foo_version = BD::Models::ReleaseVersion.make(
+        :release => foo_release, :version => 17)
+      foo_spec = { "name" => "foo", "version" => "17" }
+      foo = BD::DeploymentPlan::ReleaseSpec.new("plan", foo_spec)
+
+      bar_release = BD::Models::Release.make(:name => "bar")
+      bar_version = BD::Models::ReleaseVersion.make(
+        :release => bar_release, :version => 42)
+      bar_spec = { "name" => "bar", "version" => "42" }
+      bar = BD::DeploymentPlan::ReleaseSpec.new("plan", bar_spec)
+
       @deployment_plan.stub(:deployment).and_return(deployment)
-      @release_spec.should_receive(:release=).with(release)
-      @release_spec.should_receive(:release_version=).with(version)
-      @deployment_plan_compiler.bind_release
+      @deployment_plan.stub(:releases).and_return([foo, bar])
+
+      @deployment_plan_compiler.bind_releases
+
+      foo.release.should == foo_release
+      foo.release_version.should == foo_version
+
+      bar.release.should == bar_release
+      bar.release_version.should == bar_version
+
+      deployment.releases.to_a.should =~ [foo_release, bar_release]
+      deployment.release_versions.to_a.should =~ [foo_version, bar_version]
     end
 
     it "should fail if the release doesn't exist" do
       lambda {
-        @deployment_plan_compiler.bind_release
-      }.should raise_error("Can't find release")
+        @deployment_plan_compiler.bind_releases
+      }.should raise_error(/can't find release/i)
     end
 
     it "should fail if the release version doesn't exist" do
       lambda {
         release = BD::Models::Release.make(:name => "my_release")
         @release_spec.should_receive(:release=).with(release)
-        @deployment_plan_compiler.bind_release
-      }.should raise_error("Can't find release version")
+        @deployment_plan_compiler.bind_releases
+      }.should raise_error(/can't find release version/i)
     end
 
     it "should lock the release" do
@@ -94,9 +113,9 @@ describe Bosh::Director::DeploymentPlanCompiler do
       deployment.add_release_version(old_version)
       @release_spec.as_null_object
       @deployment_plan.stub(:deployment).and_return(deployment)
-      @deployment_plan_compiler.bind_release
+      @deployment_plan_compiler.bind_releases
 
-      deployment.release.should == release
+      deployment.releases.to_a.should == [release]
       deployment.release_versions.to_a.should =~ [old_version, new_version]
     end
   end
@@ -241,6 +260,29 @@ describe Bosh::Director::DeploymentPlanCompiler do
       job.stub(:instance).with(3).and_return(instance)
       job.stub(:resource_pool).and_return(resource_pool)
       @deployment_plan.stub(:job).with("foo").and_return(job)
+      @deployment_plan.stub(:job_rename).and_return({})
+      @deployment_plan.stub(:rename_in_progress?).and_return(false)
+
+      instance.should_receive(:instance=).with(@model)
+      instance.should_receive(:current_state=).with(state)
+      instance.should_receive(:take_network_reservations).with(reservations)
+      resource_pool.should_receive(:mark_active_vm)
+
+      @deployment_plan_compiler.bind_instance(@model, state, reservations)
+    end
+
+    it "should update the instance name if it is being renamed" do
+      state = {"state" => "baz"}
+      reservations = {"net" => "reservation"}
+
+      instance = stub(:InstanceSpec)
+      resource_pool = stub(:ResourcePoolSpec)
+      job = stub(:JobSpec)
+      job.stub(:instance).with(3).and_return(instance)
+      job.stub(:resource_pool).and_return(resource_pool)
+      @deployment_plan.stub(:job).with("bar").and_return(job)
+      @deployment_plan.stub(:job_rename).and_return({"old_name" => "foo", "new_name" => "bar"})
+      @deployment_plan.stub(:rename_in_progress?).and_return(true)
 
       instance.should_receive(:instance=).with(@model)
       instance.should_receive(:current_state=).with(state)
@@ -255,6 +297,8 @@ describe Bosh::Director::DeploymentPlanCompiler do
       reservations = {"net" => "reservation"}
       @deployment_plan.stub(:job).with("foo").and_return(nil)
       @deployment_plan.should_receive(:delete_instance).with(@model)
+      @deployment_plan.stub(:job_rename).and_return({})
+      @deployment_plan.stub(:rename_in_progress?).and_return(false)
 
       @deployment_plan_compiler.bind_instance(@model, state, reservations)
     end
@@ -449,6 +493,8 @@ describe Bosh::Director::DeploymentPlanCompiler do
 
     it "should make sure the job and index are correct" do
       lambda {
+        @deployment_plan.stub(:job_rename).and_return({})
+        @deployment_plan.stub(:rename_in_progress?).and_return(false)
         BD::Models::Instance.make(
             :deployment => @deployment, :vm => @vm, :job => "bar", :index => 11)
         @deployment_plan_compiler.verify_state(@vm, {
@@ -683,9 +729,9 @@ describe Bosh::Director::DeploymentPlanCompiler do
 
       @template_spec.stub(:name).and_return("test_template")
 
-      @deployment_plan.stub(:templates).and_return([@template_spec])
-      @deployment_plan.stub(:release).and_return(@release_spec)
+      @deployment_plan.stub(:releases).and_return([@release_spec])
 
+      @release_spec.stub(:templates).and_return([@template_spec])
       @release_spec.stub(:release_version).and_return(@release_version)
     end
 

@@ -4,24 +4,24 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 Bosh::Agent::Infrastructure.new("openstack").infrastructure
 
-describe Bosh::Agent::Infrastructure::OpenStack::Registry do
+describe Bosh::Agent::Infrastructure::Openstack::Registry do
 
   before(:each) do
     @settings = { 'status' => "ok", 'settings' => settings_json }
   end
 
   it 'should get settings' do
-    Bosh::Agent::Infrastructure::OpenStack::Registry.stub(:current_server_id).and_return("i-server")
-    Bosh::Agent::Infrastructure::OpenStack::Registry.stub(:get_json_from_url).and_return(@settings)
-    Bosh::Agent::Infrastructure::OpenStack::Registry.stub(:get_registry_endpoint).and_return("blah")
-    settings = Bosh::Agent::Infrastructure::OpenStack::Registry.get_settings
+    Bosh::Agent::Infrastructure::Openstack::Registry.stub(:current_server_id).and_return("i-server")
+    Bosh::Agent::Infrastructure::Openstack::Registry.stub(:get_json_from_url).and_return(@settings)
+    Bosh::Agent::Infrastructure::Openstack::Registry.stub(:get_registry_endpoint).and_return("blah")
+    settings = Bosh::Agent::Infrastructure::Openstack::Registry.get_settings
     settings.should == Yajl::Parser.new.parse(settings_json)
   end
 
   it 'should get registry endpoint' do
     endpoint = {"registry" => {"endpoint" => "blah"}}
-    Bosh::Agent::Infrastructure::OpenStack::Registry.stub(:get_json_from_url).and_return(endpoint)
-    Bosh::Agent::Infrastructure::OpenStack::Registry.get_registry_endpoint.should == "blah"
+    Bosh::Agent::Infrastructure::Openstack::Registry.stub(:get_json_from_url).and_return(endpoint)
+    Bosh::Agent::Infrastructure::Openstack::Registry.get_registry_endpoint.should == "blah"
   end
 
   it 'should get current_server_id' do
@@ -37,7 +37,7 @@ describe Bosh::Agent::Infrastructure::OpenStack::Registry do
     client = HTTPClient.new
     client.stub(:get).and_return(TestHTTPResponse.new)
     HTTPClient.stub(:new).and_return(client)
-    server_id = Bosh::Agent::Infrastructure::OpenStack::Registry.current_server_id
+    server_id = Bosh::Agent::Infrastructure::Openstack::Registry.current_server_id
     server_id.should == "server"
   end
 

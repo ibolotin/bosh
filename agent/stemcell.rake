@@ -214,8 +214,6 @@ namespace "stemcell" do
         ovftool_bin = get_ovftool_bin if format == "ovf"
       when "xen"
         format ||= "aws"
-      when "kvm"
-        format ||= "openstack"
       else
         raise "Unknown hypervisor: #{hypervisor}"
     end
@@ -284,21 +282,6 @@ namespace "stemcell" do
               fail("Unknown format: #{format}")
           end
 
-        when "kvm"
-          case format
-            when "openstack"
-              Dir.chdir("ubuntu-kvm") do
-                files = Dir.glob("*")
-                files.delete("run.sh")
-                raise "Found more than one image: #{files}" unless files.length == 1
-                root_image = files.first
-                mv(root_image, "root.img")
-                sh("#{sudo} e2label root.img stemcell_root")
-                sh("tar zcf ../stemcell/image root.img")
-              end
-            else
-              fail("Unknown format: #{format}")
-          end
         else
           raise "Unknown hypervisor: #{hypervisor}"
       end
@@ -387,14 +370,25 @@ namespace "stemcell" do
     build_vm_image(:hypervisor => "esxi")
   end
 
-  desc "Build chroot tgz"
-  task "chroot_tgz" do
+  desc "Build chroot tgz [infrastructure] - optional argument: vsphere (default), aws or openstack"
+  task "chroot_tgz", :infrastructure do |t, args|
+    if args[:infrastructure]
+      INFRASTRUCTURES = %w[vsphere aws openstack]
+      unless INFRASTRUCTURES.include?(args[:infrastructure])
+        puts "Please specify an infrastructure. Supported infrastructures are #{INFRASTRUCTURES}"
+        exit 1
+      end
+      @infrastructure_name = args[:infrastructure]
+      chroot_tgz = "chroot#{@infrastructure_name}.tgz"
+    else
+      chroot_tgz = "chroot.tgz"
+    end
     setup_chroot_dir
     Dir.chdir(get_working_dir) do
-      sh "#{sudo} tar zcf chroot.tgz chroot"
+      sh "#{sudo} tar zcf #{chroot_tgz} chroot"
     end
     puts "chroot directory is #{get_chroot_dir}"
-    puts "Generated chroot tgz: #{File.join(get_working_dir, "chroot.tgz")}"
+    puts "Generated chroot tgz: #{File.join(get_working_dir, chroot_tgz)}"
   end
 
   # Takes in an optional argument "chroot_dir"
@@ -425,7 +419,7 @@ namespace "stemcell" do
     sh("#{sudo} #{stages_dir}/30_aws.sh #{chroot_dir} #{lib_dir}")
 
     # Build stemcell
-    build_vm_image(:hypervisor => "xen")
+    build_vm_image(:hypervisor => "xen", :format => "aws")
   end
 
   # Takes in an optional argument "chroot_dir"

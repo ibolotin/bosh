@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
 module Bosh::Agent
-  class Infrastructure::OpenStack
+  class Infrastructure::Openstack
     require 'sigar'
     require 'agent/infrastructure/openstack/settings'
     require 'agent/infrastructure/openstack/registry'
@@ -14,10 +14,5 @@ module Bosh::Agent
       Settings.new.get_network_settings(network_name, properties)
     end
 
-  end
-
-  # Alias for Bosh::Agent::Infrastructure.infrastructure method
-  class Infrastructure::Openstack
-    Infrastructure::OpenStack
   end
 end
