@@ -36,7 +36,7 @@ module Bosh::Agent
       # and thus memoizing it.
       def current_server_id
         return @current_server_id if @current_server_id
-        @current_server_id = get_uri("/meta-data/instance-id/").delete("i-")
+        @current_server_id = get_uri("/meta-data/instance-id/").delete("i-").to_i(16).to_s(10);
       end
 
       def get_json_from_url(url)
