@@ -50,7 +50,7 @@ gem install chef --version $CHEF_VERSION
 ln -s /etc/init.d/open-vm-tools /etc/rc2.d/S88open-vm-tools
 
 # vmbuilder will default to dhcp when no IP is specified - wipe
-echo -e "auto lo\niface lo inet loopback\n" > /etc/network/interfaces
+# echo -e "auto lo\niface lo inet loopback\n" > /etc/network/interfaces
 
 mkdir -p ${bosh_app_dir}/deploy ${bosh_app_dir}/storage
 chown vcap:vcap ${bosh_app_dir}/deploy ${bosh_app_dir}/storage
