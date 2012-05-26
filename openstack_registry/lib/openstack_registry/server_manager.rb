@@ -62,7 +62,13 @@ module Bosh::OpenStackRegistry
     end
 
     def server_private_ip(server_id)
-      @openstack.servers.get(server_id).accessipv4
+      server = @openstack.servers.get(server_id)
+      @logger.debug(server)
+      ip = server.accessIPv4
+      unless ip.nil?
+        ip = server.addresses["private"][0]["addr"]
+      end
+      ip
     rescue OpenStack::Compute::Exception => e
       raise Bosh::OpenStackRegistry::OpenStackError, "OpenStack error: #{e}"
     end
