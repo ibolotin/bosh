@@ -62,7 +62,7 @@ module Bosh::Agent
         # AWS passes in the device name
         xvd_dev_path = get_xvd_path(disk_id)
         get_available_path(disk_id, xvd_dev_path)
-      when "aws"
+      when "openstack"
         # OpenStack passes in the device name
         vd_dev_path = get_vd_path(disk_id)
         get_available_path(disk_id, vd_dev_path)
