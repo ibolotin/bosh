@@ -379,7 +379,7 @@ namespace "stemcell" do
         exit 1
       end
       @infrastructure_name = args[:infrastructure]
-      chroot_tgz = "chroot#{@infrastructure_name}.tgz"
+      chroot_tgz = "chroot-#{@infrastructure_name}.tgz"
     else
       chroot_tgz = "chroot.tgz"
     end
