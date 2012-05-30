@@ -42,7 +42,17 @@ add_on_exit "enable_daemon_startup $target"
 
 # openstack specific packages(grub is not actually installed, we just need /boot/grub/menu.lst for pv-grub)
 export DEBIAN_FRONTEND=noninteractive
-run_in_chroot $target "apt-get install -y --force-yes --no-install-recommends grub-pc grub-legacy-ec2"
+run_in_chroot $target "apt-get install -y --force-yes --no-install-recommends grub-pc grub-legacy-ec2 "
+run_in_chroot $target "apt-get install -y --force-yes cloud-init "
+
+run_in_chroot $target "
+adduser --disabled-password --gecos Ubuntu ubuntu
+echo ubuntu:c1oudc0w | chpasswd
+"
+for grp in admin adm audio cdrom dialout floppy video plugdev dip
+do
+  run_in_chroot $target "adduser ubuntu $grp"
+done
 
 run_in_chroot $target "apt-get install -y --force-yes cloud-init "
 
