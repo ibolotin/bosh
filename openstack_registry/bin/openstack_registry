@@ -28,7 +28,7 @@ if config_file.nil?
   exit 1
 end
 
-runner = Bosh::OpenStackRegistry::Runner.new(config_file)
+runner = Bosh::OpenstackRegistry::Runner.new(config_file)
 
 Signal.trap("INT") do
   runner.stop

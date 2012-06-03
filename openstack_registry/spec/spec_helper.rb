@@ -54,7 +54,7 @@ module SpecHelper
 
       @db = Sequel.sqlite(:database => nil, :max_connections => 32, :pool_timeout => 10)
       @db.loggers << @logger
-      Bosh::OpenStackRegistry.db = @db
+      Bosh::OpenstackRegistry.db = @db
 
       run_migrations
     end
@@ -75,8 +75,8 @@ module SpecHelper
       reset_database
       run_migrations
 
-      Bosh::OpenStackRegistry.db = @db
-      Bosh::OpenStackRegistry.logger = @logger
+      Bosh::OpenstackRegistry.db = @db
+      Bosh::OpenstackRegistry.logger = @logger
     end
   end
 end
@@ -109,6 +109,6 @@ end
 RSpec.configure do |rspec|
   rspec.before(:each) do
     SpecHelper.reset
-    Bosh::OpenStackRegistry.logger = Logger.new(StringIO.new)
+    Bosh::OpenstackRegistry.logger = Logger.new(StringIO.new)
   end
 end

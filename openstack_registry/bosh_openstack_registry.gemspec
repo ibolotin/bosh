@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + "/lib/openstack_registry/version"
 
 Gem::Specification.new do |s|
   s.name         = "bosh_openstack_registry"
-  s.version      = Bosh::OpenStackRegistry::VERSION
+  s.version      = Bosh::OpenstackRegistry::VERSION
   s.platform     = Gem::Platform::RUBY
   s.summary      = "BOSH OpenStack registry"
   s.description  = s.summary

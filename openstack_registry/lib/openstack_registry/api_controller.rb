@@ -1,6 +1,6 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry
+module Bosh::OpenstackRegistry
 
   class ApiController < Sinatra::Base
 
@@ -35,10 +35,10 @@ module Bosh::OpenStackRegistry
 
     def initialize
       super
-      @logger = Bosh::OpenStackRegistry.logger
+      @logger = Bosh::OpenstackRegistry.logger
 
       @users = Set.new
-      @users << [Bosh::OpenStackRegistry.http_user, Bosh::OpenStackRegistry.http_password]
+      @users << [Bosh::OpenstackRegistry.http_user, Bosh::OpenstackRegistry.http_password]
       @server_manager = ServerManager.new
     end
 

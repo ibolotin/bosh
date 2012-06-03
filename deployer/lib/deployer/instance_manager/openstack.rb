@@ -109,7 +109,11 @@ module Bosh::Deployer
 
       def discover_bosh_ip
         if exists?
-          ip = cloud.openstack.servers.get(state.vm_cid).accessipv4
+          server = cloud.openstack.servers.get(state.vm_cid)
+          ip = server.accessIPv4
+          if ip.nil? || ip.empty?
+            ip = server.addresses["private"][0]["addr"]
+          end
           if ip != Config.bosh_ip
             Config.bosh_ip = ip
             logger.info("discovered bosh ip=#{Config.bosh_ip}")
@@ -120,7 +124,7 @@ module Bosh::Deployer
       end
 
       def service_ip
-        cloud.openstack.servers.get(state.vm_cid).addresses["service"].first["addr"]
+        discover_bosh_ip
       end
 
       private

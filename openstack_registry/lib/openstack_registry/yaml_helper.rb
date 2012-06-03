@@ -1,6 +1,6 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry
+module Bosh::OpenstackRegistry
   module YamlHelper
 
     def load_yaml_file(path, expected_type = Hash)

@@ -1,12 +1,12 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry
+module Bosh::OpenstackRegistry
 
   class ServerManager
 
     def initialize
-      @logger = Bosh::OpenStackRegistry.logger
-      @openstack = Bosh::OpenStackRegistry.openstack
+      @logger = Bosh::OpenstackRegistry.logger
+      @openstack = Bosh::OpenstackRegistry.openstack
     end
 
     ##
@@ -19,7 +19,7 @@ module Bosh::OpenStackRegistry
         :server_id => server_id
       }
 
-      server = Models::OpenStackServer[params] || Models::OpenStackServer.new(params)
+      server = Models::OpenstackServer[params] || Models::OpenstackServer.new(params)
       server.settings = settings
       server.save
     end
@@ -52,7 +52,7 @@ module Bosh::OpenStackRegistry
     end
 
     def get_server(server_id)
-      server = Models::OpenStackServer[:server_id => server_id]
+      server = Models::OpenstackServer[:server_id => server_id]
 
       if server.nil?
         raise ServerNotFound, "Can't find server `#{server_id}'"
@@ -68,8 +68,8 @@ module Bosh::OpenStackRegistry
         ip = server.addresses["private"][0]["addr"]
       end
       ip
-    rescue OpenStack::Compute::Exception => e
-      raise Bosh::OpenStackRegistry::OpenStackError, "OpenStack error: #{e}"
+    rescue Openstack::Compute::Exception => e
+      raise Bosh::OpenstackRegistry::OpenstackError, "OpenStack error: #{e}"
     end
 
   end

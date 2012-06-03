@@ -1,16 +1,16 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry
+module Bosh::OpenstackRegistry
   class Runner
     include YamlHelper
 
     def initialize(config_file)
-      Bosh::OpenStackRegistry.configure(load_yaml_file(config_file))
+      Bosh::OpenstackRegistry.configure(load_yaml_file(config_file))
 
-      @logger = Bosh::OpenStackRegistry.logger
-      @http_port = Bosh::OpenStackRegistry.http_port
-      @http_user = Bosh::OpenStackRegistry.http_user
-      @http_password = Bosh::OpenStackRegistry.http_password
+      @logger = Bosh::OpenstackRegistry.logger
+      @http_port = Bosh::OpenstackRegistry.http_port
+      @http_user = Bosh::OpenstackRegistry.http_user
+      @http_password = Bosh::OpenstackRegistry.http_password
     end
 
     def run
@@ -36,7 +36,7 @@ module Bosh::OpenStackRegistry
       @http_server = Thin::Server.new("0.0.0.0", @http_port, :signals => false) do
         Thin::Logging.silent = true
         map "/" do
-          run Bosh::OpenStackRegistry::ApiController.new
+          run Bosh::OpenstackRegistry::ApiController.new
         end
       end
       @http_server.start!

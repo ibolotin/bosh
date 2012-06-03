@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry::Models
-  class OpenStackServer < Sequel::Model
+module Bosh::OpenstackRegistry::Models
+  class OpenstackServer < Sequel::Model
 
     def validate
       validates_presence [:server_id, :settings]
