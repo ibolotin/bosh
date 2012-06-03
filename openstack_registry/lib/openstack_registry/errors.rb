@@ -1,6 +1,6 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
-module Bosh::OpenStackRegistry
+module Bosh::OpenstackRegistry
 
   class Error < StandardError
     def self.code(code = 500)
@@ -13,7 +13,7 @@ module Bosh::OpenStackRegistry
   class ConfigError < Error; end
   class ConnectionError < Error; end
 
-  class OpenStackError < Error; end
+  class OpenstackError < Error; end
 
   class ServerError < Error; end
   class ServerNotFound < Error; code(404); end

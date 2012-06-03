@@ -1,7 +1,7 @@
 # Copyright (c) 2009-2012 VMware, Inc.
 
 module Bosh
-  module OpenStackRegistry
+  module OpenstackRegistry
     autoload :Models, "openstack_registry/models"
   end
 end

@@ -2,19 +2,19 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-describe Bosh::OpenStackRegistry::ServerManager do
+describe Bosh::OpenstackRegistry::ServerManager do
 
   before(:each) do
     @openstack = mock("openstack")
-    Bosh::OpenStackRegistry.openstack = @openstack
+    Bosh::OpenstackRegistry.openstack = @openstack
   end
 
   let(:manager) do
-    Bosh::OpenStackRegistry::ServerManager.new
+    Bosh::OpenstackRegistry::ServerManager.new
   end
 
   def create_server(params)
-    Bosh::OpenStackRegistry::Models::OpenStackServer.create(params)
+    Bosh::OpenstackRegistry::Models::OpenstackServer.create(params)
   end
 
   def actual_ip_is(ip)
@@ -38,7 +38,7 @@ describe Bosh::OpenStackRegistry::ServerManager do
 
       expect {
         manager.read_settings("foo", "10.0.0.1")
-      }.to raise_error(Bosh::OpenStackRegistry::ServerError,
+      }.to raise_error(Bosh::OpenstackRegistry::ServerError,
                        "Server IP mismatch, expected IP is `10.0.0.1', " \
                        "actual IP is `10.0.0.2'")
     end
@@ -51,7 +51,7 @@ describe Bosh::OpenStackRegistry::ServerManager do
     it "raises an error if server not found" do
       expect {
         manager.read_settings("foo")
-      }.to raise_error(Bosh::OpenStackRegistry::ServerNotFound,
+      }.to raise_error(Bosh::OpenstackRegistry::ServerNotFound,
                        "Can't find server `foo'")
     end
   end
@@ -77,14 +77,14 @@ describe Bosh::OpenStackRegistry::ServerManager do
 
       expect {
         manager.read_settings("foo")
-      }.to raise_error(Bosh::OpenStackRegistry::ServerNotFound,
+      }.to raise_error(Bosh::OpenstackRegistry::ServerNotFound,
                        "Can't find server `foo'")
     end
 
     it "raises an error if server not found" do
       expect {
         manager.delete_settings("foo")
-      }.to raise_error(Bosh::OpenStackRegistry::ServerNotFound,
+      }.to raise_error(Bosh::OpenstackRegistry::ServerNotFound,
                        "Can't find server `foo'")
     end
   end

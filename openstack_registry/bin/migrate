@@ -26,11 +26,11 @@ if config_file.nil?
   exit 1
 end
 
-include Bosh::OpenStackRegistry::YamlHelper
+include Bosh::OpenstackRegistry::YamlHelper
 
 config = load_yaml_file(config_file)
 
-db = Bosh::OpenStackRegistry.connect_db(config["db"])
+db = Bosh::OpenstackRegistry.connect_db(config["db"])
 migrations_dir = File.expand_path("../../db/migrations", __FILE__)
 
 options = {

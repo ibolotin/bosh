@@ -2,10 +2,10 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-describe Bosh::OpenStackRegistry::Runner do
+describe Bosh::OpenstackRegistry::Runner do
 
   def make_runner(config_file)
-    Bosh::OpenStackRegistry::Runner.new(config_file)
+    Bosh::OpenstackRegistry::Runner.new(config_file)
   end
 
   def write_config(file, config)
@@ -20,14 +20,14 @@ describe Bosh::OpenStackRegistry::Runner do
       config = { "key" => "value" }
       write_config(config_file.path, config)
 
-      Bosh::OpenStackRegistry.should_receive(:configure).with(config)
+      Bosh::OpenstackRegistry.should_receive(:configure).with(config)
       make_runner(config_file.path)
     end
 
     it "fails if config file not found" do
       expect {
         make_runner("foo")
-      }.to raise_error(Bosh::OpenStackRegistry::ConfigError, "Cannot find file `foo'")
+      }.to raise_error(Bosh::OpenstackRegistry::ConfigError, "Cannot find file `foo'")
     end
 
     it "fails when config file has incorrect format" do
@@ -37,7 +37,7 @@ describe Bosh::OpenStackRegistry::Runner do
 
       expect {
         make_runner(config_file.path)
-      }.to raise_error(Bosh::OpenStackRegistry::ConfigError, /Incorrect file format/)
+      }.to raise_error(Bosh::OpenstackRegistry::ConfigError, /Incorrect file format/)
     end
 
     it "fails when some syscall fails" do
@@ -48,7 +48,7 @@ describe Bosh::OpenStackRegistry::Runner do
 
       expect {
         make_runner(config_file.path)
-      }.to raise_error(Bosh::OpenStackRegistry::ConfigError, /baz/)
+      }.to raise_error(Bosh::OpenstackRegistry::ConfigError, /baz/)
     end
   end
 

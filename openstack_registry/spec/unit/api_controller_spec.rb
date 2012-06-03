@@ -2,16 +2,16 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-describe Bosh::OpenStackRegistry::ApiController do
+describe Bosh::OpenstackRegistry::ApiController do
 
   before(:each) do
-    Bosh::OpenStackRegistry.http_user = "admin"
-    Bosh::OpenStackRegistry.http_password = "admin"
+    Bosh::OpenstackRegistry.http_user = "admin"
+    Bosh::OpenstackRegistry.http_password = "admin"
 
     @server_manager = mock("server manager")
-    Bosh::OpenStackRegistry::ServerManager.stub!(:new).and_return(@server_manager)
+    Bosh::OpenstackRegistry::ServerManager.stub!(:new).and_return(@server_manager)
 
-    rack_mock = Rack::MockSession.new(Bosh::OpenStackRegistry::ApiController.new)
+    rack_mock = Rack::MockSession.new(Bosh::OpenstackRegistry::ApiController.new)
     @session = Rack::Test::Session.new(rack_mock)
   end
 
