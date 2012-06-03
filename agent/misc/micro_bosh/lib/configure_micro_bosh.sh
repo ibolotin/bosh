@@ -36,6 +36,9 @@ echo "Starting micro bosh compilation"
 agent_pid=$!
 echo "Starting BOSH Agent for compiling micro bosh package, agent pid is $agent_pid"
 
+# Wait for agent to start
+sleep 10
+
 # Start compiler
 /var/vcap/bosh/bin/ruby ${bosh_src_dir}/package_compiler/bin/package_compiler --cpi ${infrastructure} compile ${bosh_release_dir}/release.yml ${bosh_release_dir}/release.tgz ${blobstore_path} ${agent_uri}
 
