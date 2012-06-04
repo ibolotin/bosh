@@ -72,6 +72,11 @@ module Bosh::Deployer
           db[:openstack_servers].insert_multiple(servers) if servers
         end
 
+        unless has_openstack_registry?
+          raise "openstack_registry command not found - " +
+            "run 'gem install bosh_openstack_registry'"
+        end
+
         cmd = "openstack_registry -c #{@registry_config.path}"
 
         @registry_pid = spawn(cmd)
@@ -128,6 +133,15 @@ module Bosh::Deployer
       end
 
       private
+
+      # TODO this code is simliar to has_stemcell_copy?
+      # move the two into bosh_common later
+      def has_openstack_registry?(path=ENV['PATH'])
+        path.split(":").each do |dir|
+          return true if File.exist?(File.join(dir, "openstack_registry"))
+        end
+        false
+      end
 
       def migrate(db)
         db.create_table :openstack_servers do

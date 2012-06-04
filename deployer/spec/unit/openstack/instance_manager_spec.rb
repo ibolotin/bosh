@@ -197,4 +197,18 @@ describe Bosh::Deployer::InstanceManager do
     }.should raise_error(Bosh::Deployer::ConfigError)
   end
 
+  require 'deployer/instance_manager/openstack'
+
+  internal_to Bosh::Deployer::InstanceManager::Openstack do
+    it "should not find openstack_registry" do
+      path = "/usr/bin:/bin"
+      @deployer.has_openstack_registry?(path).should be_false
+    end
+
+    it "should find find openstack_registry" do
+      path = ENV['PATH']
+      path += ":#{File.dirname(spec_asset('openstack_registry'))}"
+      @deployer.has_openstack_registry?(path).should be_true
+    end
+  end
 end
