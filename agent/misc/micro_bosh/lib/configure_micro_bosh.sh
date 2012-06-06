@@ -14,7 +14,9 @@ bosh_src_dir=/var/vcap/bosh/src/micro_bosh
 bosh_release_dir=/var/vcap/bosh/src/micro_bosh_release
 bosh_app_dir=/var/vcap
 blobstore_path=${bosh_app_dir}/micro_bosh/data/cache
-agent_uri=http://vcap:vcap@localhost:6969
+agent_host=localhost
+agent_port=6969
+agent_uri=http://vcap:vcap@${agent_host}:${agent_port}
 
 export PATH=${bosh_app_dir}/bosh/bin:$PATH
 export HOME=/root
@@ -37,7 +39,14 @@ agent_pid=$!
 echo "Starting BOSH Agent for compiling micro bosh package, agent pid is $agent_pid"
 
 # Wait for agent to start
-sleep 10
+function wait_agent {
+  for i in {1..10}
+  do
+    nc -z $1 $2 && break
+    sleep 1
+  done
+}
+wait_agent ${agent_host} ${agent_port}
 
 # Start compiler
 /var/vcap/bosh/bin/ruby ${bosh_src_dir}/package_compiler/bin/package_compiler --cpi ${infrastructure} compile ${bosh_release_dir}/release.yml ${bosh_release_dir}/release.tgz ${blobstore_path} ${agent_uri}
