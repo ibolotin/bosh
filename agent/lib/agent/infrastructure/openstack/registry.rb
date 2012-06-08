@@ -31,12 +31,17 @@ module Bosh::Agent
       end
 
       ##
-      # Reads current server id from OpenStack metadata. We are assuming
-      # server id cannot change while current process is running
+      # Reads current server name from OpenStack user-data. We are assuming
+      # server name cannot change while current process is running
       # and thus memoizing it.
       def current_server_id
         return @current_server_id if @current_server_id
-        @current_server_id = get_uri("/meta-data/instance-id/").delete("i-").to_i(16).to_s(10);
+        user_data = get_json_from_url(SERVER_DATA_URI + "/user-data")
+        unless user_data.has_key?("agent") &&
+               user_data["agent"].has_key?("id")
+          raise("Cannot parse user data for endpoint #{user_data.inspect}")
+        end
+        @current_server_id = user_data["agent"]["id"]
       end
 
       def get_json_from_url(url)

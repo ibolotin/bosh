@@ -30,7 +30,7 @@ describe Bosh::Agent::Infrastructure::Openstack::Registry do
         200
       end
       def body
-        "i-server"
+        "{\"registry\": {\"endpoint\": \"blah\"}, \"agent\": {\"id\": \"server-id\"}}"
       end
     end
 
@@ -38,7 +38,7 @@ describe Bosh::Agent::Infrastructure::Openstack::Registry do
     client.stub(:get).and_return(TestHTTPResponse.new)
     HTTPClient.stub(:new).and_return(client)
     server_id = Bosh::Agent::Infrastructure::Openstack::Registry.current_server_id
-    server_id.should == "server"
+    server_id.should == "server-id"
   end
 
   def settings_json
