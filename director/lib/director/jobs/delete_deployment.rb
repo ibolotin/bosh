@@ -8,17 +8,19 @@ module Bosh::Director
 
       def initialize(deployment_name, options = {})
         super
+
         @deployment_name = deployment_name
-        @force = options["force"] || false
+        @force = options["force"]
         @cloud = Config.cloud
+        @deployment_manager = Api::DeploymentManager.new
       end
 
       def perform
-        @logger.info("Deleting: #{@deployment_name}")
+        logger.info("Deleting: #{@deployment_name}")
 
         deployment = find_deployment(@deployment_name)
 
-        @logger.info("Acquiring deployment lock: #{deployment.name}")
+        logger.info("Acquiring deployment lock: #{deployment.name}")
         deployment_lock = Lock.new("lock:deployment:#{@deployment_name}")
 
         deployment_lock.lock do
@@ -31,7 +33,7 @@ module Bosh::Director
             delete_vms(deployment, pool)
           end
 
-          @event_log.begin_stage("Removing deployment artifacts", 3)
+          event_log.begin_stage("Removing deployment artifacts", 3)
           track_and_log("Detach stemcells") do
             deployment.remove_all_stemcells
           end
@@ -41,11 +43,11 @@ module Bosh::Director
             deployment.remove_all_release_versions
           end
 
-          @event_log.begin_stage("Deleting properties",
+          event_log.begin_stage("Deleting properties",
                                  deployment.properties.count)
-          @logger.info("Deleting deployment properties")
+          logger.info("Deleting deployment properties")
           deployment.properties.each do |property|
-            @event_log.track(property.name) do
+            event_log.track(property.name) do
               property.destroy
             end
           end
@@ -58,18 +60,18 @@ module Bosh::Director
       end
 
       def find_deployment(name)
-        Models::Deployment[:name => name] || raise(DeploymentNotFound.new(name))
+        @deployment_manager.find_by_name(name)
       end
 
       def delete_instances(deployment, pool)
         instances = deployment.job_instances
-        @event_log.begin_stage("Deleting instances", instances.count)
+        event_log.begin_stage("Deleting instances", instances.count)
 
         instances.each do |instance|
           pool.process do
             desc = "#{instance.job}/#{instance.index}"
-            @event_log.track(desc) do
-              @logger.info("Deleting #{desc}")
+            event_log.track(desc) do
+              logger.info("Deleting #{desc}")
               delete_instance(instance)
             end
           end
@@ -78,12 +80,12 @@ module Bosh::Director
 
       def delete_vms(deployment, pool)
         vms = deployment.vms
-        @event_log.begin_stage("Deleting idle VMs", vms.count)
+        event_log.begin_stage("Deleting idle VMs", vms.count)
 
         vms.each do |vm|
           pool.process do
-            @event_log.track("#{vm.cid}") do
-              @logger.info("Deleting idle vm #{vm.cid}")
+            event_log.track("#{vm.cid}") do
+              logger.info("Deleting idle vm #{vm.cid}")
               delete_vm(vm)
             end
           end
@@ -93,7 +95,7 @@ module Bosh::Director
       def delete_instance(instance)
         desc = "#{instance.job}/#{instance.index}"
         with_thread_name("delete_instance(#{desc})") do
-          @logger.info("Deleting instance: #{desc}")
+          logger.info("Deleting instance: #{desc}")
 
           vm = instance.vm
 
@@ -154,8 +156,8 @@ module Bosh::Director
         yield
       rescue => e
         raise unless @force
-        @logger.warn(e.backtrace.join("\n"))
-        @logger.info("Force deleting is set, ignoring exception")
+        logger.warn(e.backtrace.join("\n"))
+        logger.info("Force deleting is set, ignoring exception")
       end
     end
   end

@@ -8,12 +8,13 @@ module Bosh::Director
 
       def initialize(name, options = {})
         super
+
         @name = name
         @blobstore = Config.blobstore
         @errors = []
-        @force = options["force"] || false
+        @force = !!options["force"]
         @version = options["version"]
-
+        @release_manager = Api::ReleaseManager.new
       end
 
       def delete_release_version(release_version)
@@ -43,33 +44,40 @@ module Bosh::Director
           end
         end
 
-        @event_log.begin_stage("Deleting packages", packages_to_delete.count)
+        event_log.begin_stage("Deleting packages", packages_to_delete.count)
         packages_to_delete.each do |package|
           track_and_log("#{package.name}/#{package.version}") do
-            @logger.info("Package #{package.name}/#{package.version} is only used by this release version and will be deleted")
+            logger.info("Package #{package.name}/#{package.version} " +
+                        "is only used by this release version " +
+                        "and will be deleted")
             delete_package(package)
           end
         end
 
         packages_to_keep.each do |package|
-          @logger.info("Keeping package #{package.name}/#{package.version} as it is used by other release versions")
+          logger.info("Keeping package #{package.name}/#{package.version} " +
+                      "as it is used by other release versions")
           package.remove_release_version(release_version)
         end
 
-        @event_log.begin_stage("Deleting templates", templates_to_delete.count)
+        event_log.begin_stage("Deleting templates", templates_to_delete.count)
         templates_to_delete.each do |template|
           track_and_log("#{template.name}/#{template.version}") do
-            @logger.info("Template #{template.name}/#{template.version} is only used by this release version and will be deleted")
+            logger.info("Template #{template.name}/#{template.version} " +
+                        "is only used by this release version " +
+                        "and will be deleted")
             delete_template(template)
           end
         end
 
         templates_to_keep.each do |template|
-          @logger.info("Keeping template #{template.name}/#{template.version} as it is used by other release versions")
+          logger.info("Keeping template " +
+                      "#{template.name}/#{template.version} as it is used " +
+                      "by other release versions")
           template.remove_release_version(release_version)
         end
 
-        @logger.info("Remove all deployments in release version")
+        logger.info("Remove all deployments in release version")
         release_version.remove_all_deployments
 
         if @errors.empty? || @force
@@ -82,14 +90,14 @@ module Bosh::Director
       end
 
       def delete_release(release)
-        @event_log.begin_stage("Deleting packages", release.packages.count)
+        event_log.begin_stage("Deleting packages", release.packages.count)
         release.packages.each do |package|
           track_and_log("#{package.name}/#{package.version}") do
             delete_package(package)
           end
         end
 
-        @event_log.begin_stage("Deleting templates", release.templates.count)
+        event_log.begin_stage("Deleting templates", release.templates.count)
         release.templates.each do |template|
           track_and_log("#{template.name}/#{template.version}") do
             delete_template(template)
@@ -97,7 +105,9 @@ module Bosh::Director
         end
 
         if @errors.empty? || @force
-          @event_log.begin_stage("Deleting release versions", release.versions.count)
+          event_log.begin_stage("Deleting release versions",
+                                release.versions.count)
+
           release.versions.each do |release_version|
             track_and_log("#{release.name}/#{release_version.version}") do
               release_version.destroy
@@ -111,15 +121,19 @@ module Bosh::Director
       def delete_package(package)
         compiled_packages = package.compiled_packages
 
-        @logger.info("Deleting package #{package.name}/#{package.version}")
+        logger.info("Deleting package #{package.name}/#{package.version}")
 
         compiled_packages.each do |compiled_package|
           stemcell = compiled_package.stemcell
-          @logger.info("Deleting compiled package (#{compiled_package.blobstore_id}) #{package.name}/#{package.version} for #{stemcell.name}/#{stemcell.version}")
-          delete_blobstore_id(compiled_package.blobstore_id) { compiled_package.destroy }
+          logger.info("Deleting compiled package " +
+                      "(#{compiled_package.blobstore_id}) " +
+                      "#{package.name}/#{package.version} " +
+                      "for #{stemcell.name}/#{stemcell.version}")
+          delete_blobstore_id(compiled_package.blobstore_id) do
+            compiled_package.destroy
+          end
         end
 
-        @logger.info("Deleting package (#{package.blobstore_id}) #{package.name}/#{package.version}")
         delete_blobstore_id(package.blobstore_id) do
           package.remove_all_release_versions
           package.destroy
@@ -127,7 +141,7 @@ module Bosh::Director
       end
 
       def delete_template(template)
-        @logger.info("Deleting template: #{template.name}/#{template.version}")
+        logger.info("Deleting template: #{template.name}/#{template.version}")
 
         delete_blobstore_id(template.blobstore_id) do
           template.remove_all_release_versions
@@ -136,34 +150,41 @@ module Bosh::Director
       end
 
       def perform
-        @logger.info("Processing delete release")
+        logger.info("Processing delete release")
 
         lock = Lock.new("lock:release:#{@name}", :timeout => 10)
 
         lock.lock do
-          @logger.info("Looking up release: #{@name}")
-          release = Models::Release[:name => @name]
-          raise ReleaseNotFound.new(@name) if release.nil?
-          @logger.info("Found: #{release.name}")
+          logger.info("Looking up release: #{@name}")
+          release = @release_manager.find_by_name(@name)
+          desc = "#{@name}/#{@version}"
+          logger.info("Found: #{release.name}")
 
           if @version
-            @logger.info("Looking up release version: #{@version}")
-            release_version = release.versions_dataset.filter(:version => @version).first
-            raise ReleaseVersionNotFound.new(@name, @version) if release_version.nil?
+            logger.info("Looking up release version `#{desc}'")
+            release_version = @release_manager.find_version(release, @version)
+            logger.info("Found release version `#{desc}'")
+            logger.info("Checking for any deployments still using " +
+                         "this particular release version")
 
-            @logger.info("Found: #{release.name}/#{release_version.version}")
-            @logger.info("Checking for any deployments still using this particular release version")
+            deployments = release_version.deployments
 
-            unless release_version.deployments.empty?
-              raise ReleaseVersionInUse.new(@name, @version, release_version.deployments.map{ |d| d.name }.join(", "))
+            unless deployments.empty?
+              names = deployments.map{ |d| d.name }.join(", ")
+              raise ReleaseVersionInUse,
+                    "Release version `#{desc}' is still in use by: #{names}"
             end
 
             delete_release_version(release_version)
 
           else
-            @logger.info("Checking for any deployments still using the release")
-            unless release.deployments.empty?
-              raise ReleaseInUse.new(@name, release.deployments.map { |d| d.name }.join(", "))
+            logger.info("Checking for any deployments still using the release")
+            deployments = release.deployments
+
+            unless deployments.empty?
+              names = deployments.map { |d| d.name }.join(", ")
+              raise ReleaseInUse,
+                    "Release `#{@name}' is still in use by: #{names}"
             end
 
             delete_release(release)
@@ -171,7 +192,8 @@ module Bosh::Director
         end
 
         unless @errors.empty?
-          raise "Error deleting release: #{@errors.collect { |e| e.to_s }.join(",")}"
+          errors = @errors.map { |e| e.to_s }.join(", ")
+          raise ReleaseDeleteFailed, "Can't delete release: #{errors}"
         end
 
         "/release/#{@name}"
@@ -183,7 +205,8 @@ module Bosh::Director
           @blobstore.delete(blobstore_id)
           deleted = true
         rescue Exception => e
-          @logger.warn("Could not delete from blobstore: #{e} - #{e.backtrace.join("\n")}")
+          logger.warn("Could not delete from blobstore: #{e}\n " +
+                      e.backtrace.join("\n"))
           @errors << e
         end
         yield if deleted || @force
