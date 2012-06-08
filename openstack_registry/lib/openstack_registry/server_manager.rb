@@ -27,12 +27,7 @@ module Bosh::OpenstackRegistry
     ##
     # Reads server settings
     # @param [String] server_id OpenStack server id
-    # @param [optional, String] remote_ip If this IP is provided,
-    #        check will be performed to see if it server id
-    #        actually has this IP address according to OpenStack.
-    def read_settings(server_id, remote_ip = nil)
-      check_server_ip(remote_ip, server_id) if remote_ip
-
+    def read_settings(server_id)
       get_server(server_id).settings
     end
 
@@ -42,15 +37,6 @@ module Bosh::OpenstackRegistry
 
     private
 
-    def check_server_ip(ip, server_id)
-      return if ip == "127.0.0.1"
-      actual_ip = server_private_ip(server_id)
-      unless ip == actual_ip
-        raise ServerError, "Server IP mismatch, expected IP is " \
-                             "`%s', actual IP is `%s'" % [ ip, actual_ip ]
-      end
-    end
-
     def get_server(server_id)
       server = Models::OpenstackServer[:server_id => server_id]
 
@@ -59,17 +45,6 @@ module Bosh::OpenstackRegistry
       end
 
       server
-    end
-
-    def server_private_ip(server_id)
-      server = @openstack.servers.get(server_id)
-      ip = server.accessIPv4
-      if ip.nil? || ip.empty?
-        ip = server.addresses["private"][0]["addr"]
-      end
-      ip
-    rescue Openstack::Compute::Exception => e
-      raise Bosh::OpenstackRegistry::OpenstackError, "OpenStack error: #{e}"
     end
 
   end

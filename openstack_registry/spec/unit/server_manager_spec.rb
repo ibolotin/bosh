@@ -5,6 +5,8 @@ require File.expand_path("../../spec_helper", __FILE__)
 describe Bosh::OpenstackRegistry::ServerManager do
 
   before(:each) do
+    openstack = double(Fog::Compute)
+    Fog::Compute.stub(:new).and_return(openstack)
     @openstack = mock("openstack")
     Bosh::OpenstackRegistry.openstack = @openstack
   end
@@ -17,33 +19,8 @@ describe Bosh::OpenstackRegistry::ServerManager do
     Bosh::OpenstackRegistry::Models::OpenstackServer.create(params)
   end
 
-  def actual_ip_is(ip)
-    servers = mock("servers")
-    server = mock("server")
-    @openstack.should_receive(:server).and_return(server)
-    servers.should_receive(:[]).with("foo").and_return(servers)
-    server.should_receive(:accessipv4).and_return(ip)
-  end
-
   describe "reading settings" do
-    it "returns settings after verifying IP address" do
-      create_server(:server_id => "foo", :settings => "bar")
-      actual_ip_is("10.0.0.1")
-      manager.read_settings("foo", "10.0.0.1").should == "bar"
-    end
-
-    it "raises an error if IP cannot be verified" do
-      create_server(:server_id => "foo", :settings => "bar")
-      actual_ip_is("10.0.0.2")
-
-      expect {
-        manager.read_settings("foo", "10.0.0.1")
-      }.to raise_error(Bosh::OpenstackRegistry::ServerError,
-                       "Server IP mismatch, expected IP is `10.0.0.1', " \
-                       "actual IP is `10.0.0.2'")
-    end
-
-    it "doesn't check remote IP if it's not provided" do
+    it "returns settings" do
       create_server(:server_id => "foo", :settings => "bar")
       manager.read_settings("foo").should == "bar"
     end
