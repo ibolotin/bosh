@@ -5,6 +5,9 @@
 update-rc.d -f hwclockfirst remove
 update-rc.d -f hwclock remove
 
+# Remove the network persistence rules
+rm -rf /etc/udev/rules.d/70-persistent-net.rules
+
 # lp450463
 echo "acpiphp" >> /etc/modules
 

@@ -95,8 +95,8 @@ module Bosh::Agent
     end
 
     def get_vd_path(dev_path)
-      dev_path_suffix = dev_path.match("/dev/sd(.*)")[1]
-      "/dev/vd#{dev_path_suffix}"
+      dev_path_suffix = dev_path.match("/dev/sd(.*)")
+      dev_path_suffix.nil? ? dev_path : "/dev/vd#{dev_path_suffix[1]}"
     end
 
     def get_available_path(dev_path, xvd_dev_path)
