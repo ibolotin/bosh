@@ -30,7 +30,7 @@ describe Bosh::Agent::Infrastructure::Openstack::Registry do
         200
       end
       def body
-        "{\"registry\": {\"endpoint\": \"blah\"}, \"agent\": {\"id\": \"server-id\"}}"
+        "{\"registry\": {\"endpoint\": \"blah\"}, \"server\": {\"name\": \"server-id\"}}"
       end
     end
 

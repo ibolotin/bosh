@@ -37,11 +37,11 @@ module Bosh::Agent
       def current_server_id
         return @current_server_id if @current_server_id
         user_data = get_json_from_url(SERVER_DATA_URI + "/user-data")
-        unless user_data.has_key?("agent") &&
-               user_data["agent"].has_key?("id")
+        unless user_data.has_key?("server") &&
+               user_data["server"].has_key?("name")
           raise("Cannot parse user data for endpoint #{user_data.inspect}")
         end
-        @current_server_id = user_data["agent"]["id"]
+        @current_server_id = user_data["server"]["name"]
       end
 
       def get_json_from_url(url)
