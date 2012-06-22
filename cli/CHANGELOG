@@ -1,3 +1,17 @@
+=== 0.19.4 - 06/21/2012
+* fixed another upload release regression
+
+=== 0.19.3 - 06/19/2012
+* fixed upload release regression
+
+=== 0.19.2 - 06/14/2012
+* bash completion
+* fixed 'bosh status' bug
+* non-zero exit code for failed tasks
+* package matching optimization (requires director support)
+* no color when stdout is not a TTY
+* minor messaging changes
+
 === 0.19.1 - 06/05/2012
 
 * 'bosh diff' static IP helpers
