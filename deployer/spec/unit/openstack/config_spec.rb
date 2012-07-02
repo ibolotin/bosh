@@ -77,22 +77,14 @@ describe Bosh::Deployer::Config do
     agent.should be_kind_of(Bosh::Agent::HTTPClient)
   end
 
-  def mock_cloud(config)
-
-    openstack = double(Fog::Compute)
-    Fog::Compute.stub(:new).and_return(openstack)
-
-    yield openstack if block_given?
-
-    Bosh::Deployer::Config.configure(config)
-  end
-
   it "should have openstack and registry object access" do
     config = YAML.load_file(spec_asset("test-bootstrap-config-openstack.yml"))
     config["dir"] = @dir
     Bosh::Deployer::Config.configure(config)
     openstack = double(Fog::Compute)
     Fog::Compute.stub(:new).and_return(openstack)
+    glance = double(Fog::Image)
+    Fog::Image.stub(:new).and_return(glance)
     cloud = Bosh::Deployer::Config.cloud
     cloud.respond_to?(:openstack).should be_true
     cloud.respond_to?(:registry).should be_true

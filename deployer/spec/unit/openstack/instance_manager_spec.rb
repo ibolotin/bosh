@@ -34,7 +34,6 @@ describe Bosh::Deployer::InstanceManager do
     servers = mock("servers")
     @openstack.should_receive(:servers).and_return(servers)
     servers.should_receive(:get).with(id).and_return(server)
-    server.should_receive(:accessipv4).and_return(ip)
   end
 
   it "should update the apply spec" do
