@@ -91,7 +91,7 @@ module Bosh::Deployer
         timeout_time = Time.now.to_f + (60 * 5)
         http_client = HTTPClient.new()
         begin
-          http_client.head("http://0.0.0.0:#{@registry_port}")
+          http_client.head("http://127.0.0.1:#{@registry_port}")
           sleep 0.5
         rescue URI::Error, SocketError, Errno::ECONNREFUSED => e
           if timeout_time - Time.now.to_f > 0
