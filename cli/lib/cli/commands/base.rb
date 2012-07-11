@@ -130,6 +130,10 @@ module Bosh::Cli
             report = "Task tracking timeout".red
           when :error
             report = error_msg
+          when :failed
+            report = error_msg
+          when :notfound
+            report = error_msg
           when :done
             report = success_msg
           else
