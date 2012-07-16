@@ -170,9 +170,9 @@ module Bosh::Cli::Command
       end
 
       say("\nUploading release...\n")
-      status, _, director_msg = director.upload_release(tarball_path)
+      status, _ = director.upload_release(tarball_path)
 
-      task_report(status, "Release uploaded", director_msg)
+      task_report(status, "Release uploaded")
     end
 
     def create(*options)
@@ -403,9 +403,9 @@ module Bosh::Cli::Command
       end
 
       if confirmed?
-        status, _, director_msg = director.delete_release(name, :force => force,
+        status, _ = director.delete_release(name, :force => force,
                                                :version => version)
-        task_report(status, "Deleted #{desc}", director_msg)
+        task_report(status, "Deleted #{desc}")
       else
         say("Canceled deleting release".green)
       end

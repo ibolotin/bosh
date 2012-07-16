@@ -5,7 +5,7 @@ module Bosh
     class Director
       include Bosh::Cli::VersionCalc
 
-      DIRECTOR_HTTP_ERROR_CODES = [400, 403, 500]
+      DIRECTOR_HTTP_ERROR_CODES = [400, 403, 404, 500]
 
       API_TIMEOUT = 86400 * 3
       CONNECT_TIMEOUT = 30
@@ -108,17 +108,11 @@ module Bosh
 
       def get_deployment(name)
         status, body = get_json_with_status("/deployments/#{name}")
-        if status == 404
-          raise DeploymentNotFound, "Deployment `#{name}' not found"
-        end
         body
       end
 
       def list_vms(name)
         status, body = get_json_with_status("/deployments/#{name}/vms")
-        if status == 404
-          raise DeploymentNotFound, "Deployment `#{name}' not found"
-        end
         body
       end
 
@@ -198,7 +192,7 @@ module Bosh
         options[:payload] = JSON.generate(payload)
         options[:content_type] = "application/json"
 
-        status, task_id, _ = request_and_track(:post, url, options)
+        status, task_id = request_and_track(:post, url, options)
 
         # TODO: this needs to be done in command handler, not in director.rb
         return nil if status != :done
@@ -264,7 +258,7 @@ module Bosh
         url = "/deployments/#{deployment_name}/jobs/#{job_name}"
         url += "/#{index}/logs?type=#{log_type}&filters=#{filters}"
 
-        status, task_id, _ = request_and_track(:get, url, options)
+        status, task_id = request_and_track(:get, url, options)
 
         # TODO: this should be done in command handler, not in director.rb
         return nil if status != :done
@@ -276,7 +270,7 @@ module Bosh
 
         url = "/deployments/#{deployment_name}/vms?format=full"
 
-        status, task_id, _ = request_and_track(:get, url, options)
+        status, task_id = request_and_track(:get, url, options)
 
         # TODO: this should be done in command handler, not in director.rb
         if status != :done
@@ -432,11 +426,10 @@ module Bosh
         payload = options.delete(:payload)
         track_opts = options
 
-        http_status, body, headers = request(method, uri, content_type, payload)
+        http_status, _, headers = request(method, uri, content_type, payload)
         location = headers[:location]
         redirected = http_status == 302
         task_id = nil
-        director_msg = nil
 
         if redirected
           if location =~ /\/tasks\/(\d+)\/?$/ # Looks like we received task URI
@@ -447,11 +440,10 @@ module Bosh
             status = :non_trackable
           end
         else
-          http_status == 404 ? status = :notfound : status = :failed
-          director_msg = parse_error_message(http_status, body)
+          status = :failed
         end
 
-        [status, task_id, director_msg]
+        [status, task_id]
       end
 
       def upload_and_track(method, uri, filename, options = {})
@@ -490,7 +482,11 @@ module Bosh
         end
 
         if DIRECTOR_HTTP_ERROR_CODES.include?(response.code)
-          raise DirectorError, parse_error_message(response.code, body)
+          if response.code == 404
+            raise ResourceNotFound, parse_error_message(response.code, body)
+          else
+            raise DirectorError, parse_error_message(response.code, body)
+          end
         end
 
         headers = response.headers.inject({}) do |hash, (k, v)|
