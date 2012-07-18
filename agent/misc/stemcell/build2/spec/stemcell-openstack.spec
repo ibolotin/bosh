@@ -24,6 +24,7 @@ stage system_kernel
 
 # Misc
 stage system_openstack_network
+stage system_openstack_modules
 stage system_parameters
 
 # Finalisation
