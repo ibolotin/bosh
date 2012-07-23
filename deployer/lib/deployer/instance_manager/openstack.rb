@@ -149,9 +149,24 @@ module Bosh::Deployer
         ip["addr"] unless ip.nil? || ip.empty?
       end
 
+      # @return [Integer] size in MiB
+      def disk_size(cid)
+        # OpenStack stores disk size in GiB but we work with MiB
+        cloud.openstack.volumes.get(cid).size * 1024
+      end
+
+      def persistent_disk_changed?
+        # since OpenStack stores disk size in GiB and we use MiB there
+        # is a risk of conversion errors which lead to an unnecessary
+        # disk migration, so we need to do a double conversion
+        # here to avoid that
+        requested = (Config.resources['persistent_disk'] / 1024.0).ceil * 1024
+        requested != disk_size(state.disk_cid)
+      end
+
       private
 
-      # TODO this code is simliar to has_stemcell_copy?
+      # TODO this code is similar to has_stemcell_copy?
       # move the two into bosh_common later
       def has_openstack_registry?(path=ENV['PATH'])
         path.split(":").each do |dir|
