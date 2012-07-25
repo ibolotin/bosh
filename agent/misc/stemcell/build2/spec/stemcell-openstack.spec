@@ -42,4 +42,4 @@ stage image_openstack_update_grub
 stage image_openstack_prepare_stemcell
 
 # Final stemcell
-stage stemcell
+stage stemcell_openstack
