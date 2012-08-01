@@ -38,7 +38,8 @@ module Bosh::OpenstackRegistry
       @logger = Bosh::OpenstackRegistry.logger
 
       @users = Set.new
-      @users << [Bosh::OpenstackRegistry.http_user, Bosh::OpenstackRegistry.http_password]
+      @users << [Bosh::OpenstackRegistry.http_user,
+                 Bosh::OpenstackRegistry.http_password]
       @server_manager = ServerManager.new
     end
 

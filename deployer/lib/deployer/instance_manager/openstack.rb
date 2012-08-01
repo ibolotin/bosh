@@ -29,13 +29,13 @@ module Bosh::Deployer
         @ssh_port = properties["openstack"]["ssh_port"] || 22
         @ssh_wait = properties["openstack"]["ssh_wait"] || 60
 
-        key = properties["openstack"]["openstack_private_key"]
+        key = properties["openstack"]["private_key"]
         unless key
-          raise ConfigError, "Missing properties.openstack.openstack_private_key"
+          raise ConfigError, "Missing properties.openstack.private_key"
         end
         @ssh_key = File.expand_path(key)
         unless File.exists?(@ssh_key)
-          raise ConfigError, "properties.openstack.openstack_private_key '#{key}' does not exist"
+          raise ConfigError, "properties.openstack.private_key '#{key}' does not exist"
         end
 
         uri = URI.parse(properties["registry"]["endpoint"])

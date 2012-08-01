@@ -80,5 +80,3 @@ describe Bosh::OpenstackRegistry::Runner do
   end
 
 end
-
-

@@ -50,4 +50,3 @@ module Bosh::OpenstackRegistry
   end
 
 end
-
