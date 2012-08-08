@@ -38,7 +38,10 @@ stage bosh_dpkg_list
 # Image/bootloader
 stage image_create
 stage image_install_grub
-stage image_openstack_update_grub
+# For KVM, extract partition
+stage image_openstack_extract_partition
+# For Xen, update Grub
+#stage image_openstack_update_grub
 stage image_openstack_prepare_stemcell
 
 # Final stemcell

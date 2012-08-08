@@ -23,8 +23,8 @@ manifest = {
     "bosh_protocol" => bosh_protocol,
     "cloud_properties" => {
         "infrastructure" => stemcell_infrastructure,
-        "disk_format" => "raw",
-        "container_format" => "bare"
+        "disk_format" => "ami",
+        "container_format" => "ami"
     }
 }
 
