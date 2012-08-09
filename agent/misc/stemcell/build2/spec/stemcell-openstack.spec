@@ -38,10 +38,12 @@ stage bosh_dpkg_list
 # Image/bootloader
 stage image_create
 stage image_install_grub
-# For KVM, extract partition
-stage image_openstack_extract_partition
-# For Xen, update Grub
-#stage image_openstack_update_grub
+if [ ${stemcell_hypervisor:-kvm} == "xen" ]
+then
+  stage image_openstack_update_grub
+else
+  stage image_openstack_extract_partition
+fi
 stage image_openstack_prepare_stemcell
 
 # Final stemcell

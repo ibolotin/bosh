@@ -30,4 +30,5 @@ bosh_users_password=c1oudc0w
 # stemcell_name=untitled
 # stemcell_version=unknown
 # stemcell_infrastructure=vsphere|aws|openstack
+# stemcell_hypervisor=esxi|xen|kvm
 # bosh_protocol_version=unknown
