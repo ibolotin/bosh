@@ -9,4 +9,3 @@ source $base_dir/lib/prelude_config.bash
 
 assert_available losetup
 assert_available fdisk
-

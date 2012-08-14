@@ -4,8 +4,8 @@ module Bosh::Agent
   class Infrastructure::Openstack::Registry
     class << self
 
-      API_TIMEOUT           = 86400 * 3
-      CONNECT_TIMEOUT       = 30
+      API_TIMEOUT     = 86400 * 3
+      CONNECT_TIMEOUT = 30
       SERVER_DATA_URI = "http://169.254.169.254/1.0"
 
       def get_uri(uri)
@@ -105,7 +105,7 @@ module Bosh::Agent
         settings
 
       rescue Yajl::ParseError
-        raise("Cannot parse settings for from registry #{@registry_endpoint}")
+        raise("Cannot parse settings from registry #{@registry_endpoint}")
       end
 
     end
