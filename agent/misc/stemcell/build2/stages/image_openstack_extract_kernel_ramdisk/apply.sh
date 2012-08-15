@@ -11,13 +11,13 @@ disk_image_name=root.img
 kernel_image_name=kernel.img
 ramdisk_image_name=initrd.img
 
-# Map partition in image to loopback
-dev=$(kpartx -av $work/$disk_image_name | grep "^add" | cut -d" " -f3)
+# Associate first unused loop device to image
+loop_device=$(losetup -f --show $work/$disk_image_name)
 
 # Mount partition
 mnt=$work/mnt
 mkdir -p $mnt
-mount /dev/mapper/$dev $mnt
+mount $loop_device $mnt
 
 # Find and copy kernel
 vmlinuz_file=$(find $mnt/boot/ -name "vmlinuz-*")
@@ -36,5 +36,6 @@ fi
 # Unmount partition
 umount $mnt
 
-# Unmap partition
-kpartx -dv $work/$disk_image_name
+# Detach the image from the loop device
+sleep 1
+losetup -d $loop_device
