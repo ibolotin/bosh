@@ -91,7 +91,7 @@ module Bosh::Cli::Command
           err("Invalid manifest format")
         end
 
-        stemcell = dig_hash(manifest, "cloud", "properties", "stemcell", "image_id")
+        stemcell = dig_hash(manifest, "resources", "cloud_properties", "image_id")
 
         if stemcell.nil?
           err "No stemcell provided"
@@ -101,6 +101,8 @@ module Bosh::Cli::Command
       rel_path = deployment[/#{Regexp.escape File.join(work_dir, '')}(.*)/, 1]
 
       desc = "`#{rel_path.green}' to `#{target_name.green}'"
+
+      deployer.check_dependencies
 
       if update
         unless deployer.exists?
