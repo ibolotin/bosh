@@ -71,7 +71,7 @@ module Bosh::Cli::Command
     # usage "verify release <path>"
     # desc  "Verify release"
     # route :release, :verify
-    def verify(tarball_path, *options)
+    def verify(tarball_path)
       tarball = Bosh::Cli::ReleaseTarball.new(tarball_path)
 
       say("\nVerifying release...")
@@ -92,8 +92,23 @@ module Bosh::Cli::Command
     # desc  "Upload release (<path> can point to tarball or manifest, " +
     #           "defaults to the most recently created release)"
     # route :release, :upload
-    def upload(release_file = nil)
+    def upload(*options)
       auth_required
+
+      # TODO: need option helpers badly!
+      release_file = nil
+      if options.size > 0 && options.first[0..0] != "-"
+        release_file = options.shift
+      end
+
+      upload_options = {
+        :rebase => !!options.delete("--rebase"),
+        :repack => true
+      }
+
+      if options.size > 0
+        err("Unknown options: #{options.join(", ")}")
+      end
 
       if release_file.nil?
         check_if_release_dir
@@ -109,18 +124,20 @@ module Bosh::Cli::Command
         end
       end
 
+      unless File.exist?(release_file)
+        err("Release file doesn't exist")
+      end
+
       file_type = `file --mime-type -b '#{release_file}'`
 
       if file_type =~ /text\/(plain|yaml)/
-        upload_manifest(release_file)
+        upload_manifest(release_file, upload_options)
       else # Just assume tarball
-        upload_tarball(release_file)
+        upload_tarball(release_file, upload_options)
       end
     end
 
-    def upload_manifest(manifest_path)
-      manifest = load_yaml_file(manifest_path)
-      remote_release = get_remote_release(manifest["name"]) rescue nil
+    def upload_manifest(manifest_path, upload_options = {})
       package_matches = match_remote_packages(File.read(manifest_path))
 
       find_release_dir(manifest_path)
@@ -128,11 +145,8 @@ module Bosh::Cli::Command
       blobstore = release.blobstore
       tmpdir = Dir.mktmpdir
 
-      at_exit { FileUtils.rm_rf(tmpdir) }
-
-      compiler =
-        Bosh::Cli::ReleaseCompiler.new(manifest_path, blobstore,
-                                       remote_release, package_matches)
+      compiler = Bosh::Cli::ReleaseCompiler.new(
+        manifest_path, blobstore, package_matches)
       need_repack = true
 
       unless compiler.exists?
@@ -140,13 +154,16 @@ module Bosh::Cli::Command
         compiler.compile
         need_repack = false
       end
-      upload_tarball(compiler.tarball_path, :repack => need_repack)
+
+      upload_options[:repack] = need_repack
+      upload_tarball(compiler.tarball_path, upload_options)
     end
 
-    def upload_tarball(tarball_path, options = {})
+    def upload_tarball(tarball_path, upload_options = {})
       tarball = Bosh::Cli::ReleaseTarball.new(tarball_path)
       # Trying to repack release by default
-      repack  = options.has_key?(:repack) ? !!options[:repack] : true
+      repack = upload_options[:repack]
+      rebase = upload_options[:rebase]
 
       say("\nVerifying release...")
       tarball.validate(:allow_sparse => true)
@@ -159,7 +176,7 @@ module Bosh::Cli::Command
       begin
         remote_release = get_remote_release(tarball.release_name) rescue nil
 
-        if remote_release &&
+        if remote_release && !rebase &&
           remote_release["versions"].include?(tarball.version)
           err("This release version has already been uploaded")
         end
@@ -168,7 +185,7 @@ module Bosh::Cli::Command
           package_matches = match_remote_packages(tarball.manifest)
 
           say("Checking if can repack release for faster upload...")
-          repacked_path = tarball.repack(remote_release, package_matches)
+          repacked_path = tarball.repack(package_matches)
           if repacked_path.nil?
             say("Uploading the whole release".green)
           else
@@ -182,10 +199,15 @@ module Bosh::Cli::Command
         # a release info (think new releases)
       end
 
-      say("\nUploading release...\n")
-      status, _ = director.upload_release(tarball_path)
-
-      task_report(status, "Release uploaded")
+      if rebase
+        say("Uploading release (#{"will be rebased".yellow})")
+        status, _ = director.rebase_release(tarball_path)
+        task_report(status, "Release rebased")
+      else
+        say("\nUploading release\n")
+        status, _ = director.upload_release(tarball_path)
+        task_report(status, "Release uploaded")
+      end
     end
 
     # usage  "create release"
@@ -288,23 +310,17 @@ module Bosh::Cli::Command
       end
 
       header("Building packages")
-      Dir[File.join(work_dir, "packages", "*")].each do |package_dir|
-        next unless File.directory?(package_dir)
-        package_dirname = File.basename(package_dir)
-        package_spec = load_yaml_file(File.join(package_dir, "spec"))
 
-        if package_spec["name"] != package_dirname
-          err("Found `#{package_spec["name"]}' package in " +
-              "`#{package_dirname}' directory, please fix it")
-        end
+      packages = Bosh::Cli::PackageBuilder.discover(
+        work_dir,
+        :final => final,
+        :blobstore => release.blobstore,
+        :dry_run => dry_run
+      )
 
-        package = Bosh::Cli::PackageBuilder.new(package_spec, work_dir,
-                                                final, release.blobstore)
-        package.dry_run = true if dry_run
-
+      packages.each do |package|
         say("Building #{package.name.green}...")
         package.build
-        packages << package
         nl
       end
 
@@ -316,7 +332,7 @@ module Bosh::Cli::Command
         sorted_packages = tsort_packages(package_index)
         header("Resolving dependencies")
         say("Dependencies resolved, correct build order is:")
-        for package_name in sorted_packages
+        sorted_packages.each do |package_name|
           say("- %s" % [package_name])
         end
         nl
@@ -325,28 +341,17 @@ module Bosh::Cli::Command
       built_package_names = packages.map { |package| package.name }
 
       header("Building jobs")
-      Dir[File.join(work_dir, "jobs", "*")].each do |job_dir|
-        next unless File.directory?(job_dir)
-        job_dirname = File.basename(job_dir)
+      jobs = Bosh::Cli::JobBuilder.discover(
+        work_dir,
+        :final => final,
+        :blobstore => release.blobstore,
+        :dry_run => dry_run,
+        :package_names => built_package_names
+      )
 
-        prepare_script = File.join(job_dir, "prepare")
-        if File.exists?(prepare_script)
-          say("Found prepare script in `#{File.basename(job_dir)}'")
-          Bosh::Cli::JobBuilder.run_prepare_script(prepare_script)
-        end
-
-        job_spec = load_yaml_file(File.join(job_dir, "spec"))
-        if job_spec["name"] != job_dirname
-          err("Found `#{job_spec["name"]}' job in " +
-              "`#{job_dirname}' directory, please fix it")
-        end
-
-        job = Bosh::Cli::JobBuilder.new(job_spec, work_dir, final,
-                                        release.blobstore, built_package_names)
-        job.dry_run = dry_run
+      jobs.each do |job|
         say("Building #{job.name.green}...")
         job.build
-        jobs << job
         nl
       end
 

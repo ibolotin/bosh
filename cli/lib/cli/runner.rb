@@ -240,8 +240,15 @@ module Bosh::Cli
         route  :deployment, :edit
       end
 
+      command :validate_jobs do
+        usage "validate jobs"
+        desc  "Validates all jobs in the current release using current" +
+              "deployment manifest as the source of properties"
+        route :deployment, :validate_jobs
+      end
+
       command :ssh do
-        usage "ssh <job> [index] [<options>] [command]"
+        usage "ssh <job>[/<index>] [index] [<options>] [command]"
         desc  "Given a job, execute the given command or " +
               "start an interactive session"
         option "--public_key <file>"
@@ -419,9 +426,12 @@ module Bosh::Cli
       end
 
       command :upload_release do
-        usage "upload release [<path>]"
-        desc  "Upload release (<path> can point to tarball or manifest, " +
+        usage  "upload release [<path>]"
+        desc   "Upload release (<path> can point to tarball or manifest, " +
                   "defaults to the most recently created release)"
+        option "--rebase", "Rebases this release onto the latest version " +
+                  "known by director (discards local job/package versions in " +
+                  "favor of versions assigned by director)"
         route :release, :upload
       end
 

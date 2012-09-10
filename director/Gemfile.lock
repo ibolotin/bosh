@@ -26,7 +26,7 @@ GEM
       httpclient (>= 2.2.0)
       uuidtools (>= 2.1.2)
       yajl-ruby (>= 0.8.2)
-    bosh_common (0.5.0)
+    bosh_common (0.5.1)
     bosh_cpi (0.4.4)
       bosh_common
     bosh_encryption (0.0.3)
@@ -53,11 +53,11 @@ GEM
     daemons (1.1.8)
     diff-lcs (1.1.3)
     eventmachine (0.12.10)
-    excon (0.14.3)
+    excon (0.16.2)
     ffi (1.0.11)
     fog (1.5.0)
       builder
-      excon (~> 0.14.0)
+      excon (~> 0.14)
       formatador (~> 0.2.0)
       mime-types
       multi_json (~> 1.0)
@@ -176,7 +176,7 @@ DEPENDENCIES
   bcrypt-ruby
   blobstore_client (~> 0.3.13)
   bosh_aws_cpi (>= 0.6.2)
-  bosh_common (>= 0.5.0)
+  bosh_common (>= 0.5.1)
   bosh_cpi (>= 0.4.3)
   bosh_encryption (>= 0.0.2)
   bosh_openstack_cpi (>= 0.0.3)

@@ -70,10 +70,18 @@ require "cli/release_tarball"
 
 require "cli/blob_manager"
 
+require "common/properties"
+require "cli/job_property_collection"
+require "cli/job_property_validator"
+
 require "cli/command_definition"
 require "cli/runner"
 
 YAML::ENGINE.yamler = 'syck' if defined?(YAML::ENGINE.yamler)
+
+tmpdir = Dir.mktmpdir
+at_exit { FileUtils.rm_rf(tmpdir) }
+ENV["TMPDIR"] = tmpdir
 
 require File.expand_path(File.dirname(__FILE__) + "/cli/commands/base")
 

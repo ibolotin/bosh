@@ -43,6 +43,35 @@ module Bosh::Cli
     # final build tarballs should be ignored as well
     # final builds metadata should be checked in
 
+    # @param [String] directory Release directory
+    # @param [Hash] options Package build options
+    def self.discover(directory, options = {})
+      builders = []
+
+      Dir[File.join(directory, "packages", "*")].each do |package_dir|
+        next unless File.directory?(package_dir)
+        package_dirname = File.basename(package_dir)
+        package_spec = load_yaml_file(File.join(package_dir, "spec"))
+
+        if package_spec["name"] != package_dirname
+          raise InvalidPackage,
+                "Found `#{package_spec["name"]}' package in " +
+                "`#{package_dirname}' directory, please fix it"
+        end
+
+        is_final = options[:final]
+        blobstore = options[:blobstore]
+        dry_run = options[:dry_run]
+
+        builder = new(package_spec, directory, is_final, blobstore)
+        builder.dry_run = true if dry_run
+
+        builders << builder
+      end
+
+      builders
+    end
+
     def initialize(spec, release_dir, final, blobstore,
         sources_dir = nil, blobs_dir = nil, alt_src_dir = nil)
       spec = load_yaml_file(spec) if spec.is_a?(String) && File.file?(spec)
@@ -86,8 +115,6 @@ module Bosh::Cli
       FileUtils.mkdir_p(package_dir)
       FileUtils.mkdir_p(@dev_builds_dir)
       FileUtils.mkdir_p(@final_builds_dir)
-
-      at_exit { FileUtils.rm_rf(build_dir) }
 
       init_indices
     end
@@ -166,10 +193,10 @@ module Bosh::Cli
           ENV["RELEASE_DIR"] = @release_dir
           in_build_dir do
             pre_packaging_out = `bash -x pre_packaging 2>&1`
-            pre_packaging_out.split("\n").each do |line|
-              say("> #{line}")
-            end
             unless $?.exitstatus == 0
+              pre_packaging_out.split("\n").each do |line|
+                say("> #{line}")
+              end
               raise InvalidPackage, "`#{name}' pre-packaging failed"
             end
           end

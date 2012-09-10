@@ -19,6 +19,8 @@ require "tmpdir"
 require "yaml"
 require "time"
 
+require "common/properties"
+
 require "bcrypt"
 require "blobstore_client"
 require "eventmachine"
@@ -46,6 +48,7 @@ require "director/config"
 require "director/event_log"
 require "director/task_result_file"
 require "director/blob_util"
+require "director/version_calc"
 
 require "director/client"
 require "director/agent_client"
@@ -237,7 +240,10 @@ module Bosh::Director
     end
 
     post "/releases", :consumes => :tgz do
-      task = @release_manager.create_release(@user, request.body)
+      options = {}
+      options["rebase"] = true if params["rebase"] == "true"
+
+      task = @release_manager.create_release(@user, request.body, options)
       redirect "/tasks/#{task.id}"
     end
 
@@ -438,12 +444,21 @@ module Bosh::Director
         raise BadManifest, "Manifest doesn't have a usable packages section"
       end
 
-      sha1_list =  manifest["packages"].map { |package| package["sha1"] }
+      fp_list = []
+      sha1_list = []
 
-      package_dataset = Models::Package.dataset
-      packages =
-        package_dataset.select(:sha1).filter(:sha1 => sha1_list).distinct.all
-      json_encode(packages.map { |package| package.sha1 })
+      manifest["packages"].each do |package|
+        fp_list << package["fingerprint"] if package["fingerprint"]
+        sha1_list << package["sha1"] if package["sha1"]
+      end
+
+      filter = {:fingerprint => fp_list, :sha1 => sha1_list}.sql_or
+
+      result = Models::Package.where(filter).all.map { |package|
+        [package.sha1, package.fingerprint]
+      }.flatten.compact.uniq
+
+      json_encode(result)
     end
 
     get "/tasks" do
