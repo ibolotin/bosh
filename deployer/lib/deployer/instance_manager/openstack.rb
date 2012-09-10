@@ -131,6 +131,7 @@ module Bosh::Deployer
           server = cloud.openstack.servers.get(state.vm_cid)
           ip = server.public_ip_address
           ip = server.private_ip_address if ip.nil? || ip.empty?
+          ip = server.addresses.values[0][0] if ip.nil? || ip.empty?
           if ip.nil? || ip.empty?
             raise "Unable to discover bosh ip"
           else
@@ -145,7 +146,9 @@ module Bosh::Deployer
       end
 
       def service_ip
-        ip = cloud.openstack.servers.get(state.vm_cid).private_ip_address
+        server = cloud.openstack.servers.get(state.vm_cid)
+        ip = server.private_ip_address
+        ip = server.addresses.values[0][0] if ip.nil? || ip.empty?
         ip["addr"] unless ip.nil? || ip.empty?
       end
 
