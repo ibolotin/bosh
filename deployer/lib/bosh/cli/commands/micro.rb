@@ -118,9 +118,9 @@ module Bosh::Cli::Command
         end
 
         # make sure the user knows a persistent disk is required
-        unless dig_hash(manifest, "resources", "persistent_disk")
-          quit("No persistent disk configured!".red)
-        end
+#        unless dig_hash(manifest, "resources", "persistent_disk")
+#          quit("No persistent disk configured!".red)
+#        end
 
         confirmation = "Deploying new"
 

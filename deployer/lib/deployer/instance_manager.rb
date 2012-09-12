@@ -317,8 +317,11 @@ module Bosh::Deployer
       check_persistent_disk
 
       if state.disk_cid.nil?
-        create_disk
-        attach_disk(state.disk_cid, true)
+        size = Config.resources['persistent_disk']
+        if size != 0
+	  create_disk
+          attach_disk(state.disk_cid, true)
+        end
       elsif persistent_disk_changed?
         size = Config.resources['persistent_disk']
 
